@@ -6,6 +6,8 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 48, 48)
 
+restart_flag = False
+
 # Hàm reset ball
 def reset_ball():
     global ball_speed_x, ball_speed_y
@@ -118,6 +120,7 @@ def animate_cpu():
         
 # Hàm menu
 def show_menu():
+    game_over_flag = False
         # Thêm dòng "Ping Pong Game" làm tựa đề
     ping_pong_title_font = pygame.font.Font(None, 80)
     ping_pong_title_text = ping_pong_title_font.render("Ping Pong Game", True, (255, 255, 255))
@@ -173,15 +176,7 @@ def show_point():
     elif game_mode == 'player':
         player2_score_surface = score_font.render(str(player2_points), True, "white")
         screen.blit(player2_score_surface,(screen_width/4,20))
-
-# Hàm bắt đầu game mới
-def start_new_game():
-    global game_over_flag, player1_points, player2_points, cpu_points
-    game_over_flag = False
-    player1_points = 0
-    player2_points = 0
-    cpu_points = 0
-           
+          
 # Hàm gameover
 def game_over():
     global game_over_flag
@@ -218,7 +213,9 @@ def game_over():
 screen_menu = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 
+# Hàm menu pause 
 def pause_menu():
+    global game_over_flag, restart_flag
     pause_options = ["Continue", "Restart", "Exit to menu"]
     selected_item = 0
     while True:
@@ -232,10 +229,18 @@ def pause_menu():
                 elif event.key == pygame.K_DOWN:  # Di chuyển con trỏ xuống
                     selected_item = (selected_item + 1) % len(pause_options)
                 elif event.key == pygame.K_RETURN:  # Chọn tùy chọn
-                    return pause_options[selected_item]
+                    if selected_item == 0:
+                        return "continue"
+                    elif selected_item == 1:
+                        start_new_game()
+                        return "restart"
+                    elif selected_item == 2:
+                        start_new_game()
+                        return "new_game"
+        
         screen.fill(BLACK)
         
-# Vẽ các nút trên thanh menu
+        # Vẽ các nút trên thanh menu
         font = pygame.font.SysFont(None, 50)
         
         for i, item in enumerate(pause_options):
@@ -249,7 +254,9 @@ def pause_menu():
         pygame.display.flip()
         clock.tick(30)
 
+# Hàm pause game
 def pause_game():
+    global game_mode
     paused = True
     while paused:
         for event in pygame.event.get():
@@ -264,7 +271,28 @@ def pause_game():
         action = pause_menu()
         if action == "continue":
             paused = False
+        elif action == "restart":
+            start_new_game()
+            return "restart"
+        elif action == "new_game":
+            start_new_game()
+            return "new_game"
 
+# Hàm bắt đầu game mới
+def start_new_game():
+    global game_over_flag, player1_points, player2_points, cpu_points, game_mode
+    game_mode = show_menu()
+
+    game_over_flag = False
+    player1_points = 0
+    player2_points = 0
+    cpu_points = 0
+
+    ball.center = (screen_width/2, screen_height/2)
+    cpu.midleft = (0, screen_height/2)
+
+    player1.midright = (screen_width, screen_height/2)
+    player2.midleft = (0, screen_height/2)
 
 pygame.init()
 
@@ -279,7 +307,7 @@ ball = pygame.Rect(0,0,30,30)
 ball.center = (screen_width/2, screen_height/2)
 
 cpu = pygame.Rect(0,0,20,100)
-cpu.centery = screen_height/2
+cpu.midleft = (0, screen_height/2)
 
 player1 = pygame.Rect(0,0,20,100)
 player1.midright = (screen_width, screen_height/2)
@@ -303,7 +331,6 @@ cpu_points, player1_points, player2_points = 0, 0, 0
 score_font = pygame.font.Font(None, 100)
 
 game_mode = show_menu()  # Show the menu and get the selected game mode
-
 # Các phím duy chuyển của Player 1 và Player 2
 running = True
 while running:
@@ -313,8 +340,11 @@ while running:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_p:
-                pause_game()
-     
+                action = pause_game()
+                if action == "restart":
+                    start_new_game()
+                if action == "new_game":
+                    show_menu()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 player1_speed_y = -6
