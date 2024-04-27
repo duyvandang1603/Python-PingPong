@@ -1,4 +1,6 @@
 import pygame, sys, random
+# -*- coding: utf-8 -*-
+
 
 screen_width = 1300
 screen_height = 800
@@ -7,6 +9,36 @@ WHITE = (255, 255, 255)
 RED = (255, 48, 48)
 
 restart_flag = False
+
+# Kích thước các vật thể
+ball = pygame.Rect(0,0,30,30)
+ball.center = (screen_width/2, screen_height/2)
+
+cpu = pygame.Rect(0,0,20,100)
+cpu.midleft = (0, screen_height/2)
+
+player1 = pygame.Rect(0,0,20,100)
+player1.midright = (screen_width, screen_height/2)
+
+player2 = pygame.Rect(0,0,20,100)
+player2.midleft = (0, screen_height/2)
+
+# Tốc độ di chuyển các vật thể
+ball_speed_x = 7
+ball_speed_y = 7
+player1_speed_x = 0
+player1_speed_y = 0
+player2_speed_x = 0
+player2_speed_y = 0
+cpu_speed_x = 6
+cpu_speed_y = 6
+cpu_points, player1_points, player2_points = 0, 0, 0
+
+screen_menu = pygame.display.set_mode((screen_width, screen_height))
+clock = pygame.time.Clock()
+
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("My Pong Game!")
 
 # Hàm reset ball
 def reset_ball():
@@ -120,11 +152,18 @@ def animate_cpu():
         
 # Hàm menu
 def show_menu():
-    game_over_flag = False
         # Thêm dòng "Ping Pong Game" làm tựa đề
     ping_pong_title_font = pygame.font.Font(None, 80)
     ping_pong_title_text = ping_pong_title_font.render("Ping Pong Game", True, (255, 255, 255))
     ping_pong_title_text_rect = ping_pong_title_text.get_rect(center=(screen_width / 2, 100))
+    
+    
+    # Thành viên thực hiện
+    contributors_font = pygame.font.Font(None, 20)
+    contributor_text_1 = contributors_font.render(u"Thành viên thực hiện:", True, WHITE)
+    contributor_text_2 = contributors_font.render(u"Đặng Duy Văn - 3120410603", True, WHITE)
+    contributor_text_3 = contributors_font.render(u"Tạ Hà Anh Tú - 3120410579", True, WHITE)
+
  
     
     menu_font = pygame.font.Font(None, 50)
@@ -135,6 +174,9 @@ def show_menu():
         screen.fill('black')
         screen.blit(ping_pong_title_text, ping_pong_title_text_rect)
 
+        screen.blit(contributor_text_1, (30, screen_height - 100))
+        screen.blit(contributor_text_2, (30, screen_height - 70))
+        screen.blit(contributor_text_3, (30, screen_height - 40))
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -208,14 +250,9 @@ def game_over():
             show_menu()
             start_new_game()
             game_over_flag=True
-            
-            
-screen_menu = pygame.display.set_mode((screen_width, screen_height))
-clock = pygame.time.Clock()
-
+               
 # Hàm menu pause 
 def pause_menu():
-    global game_over_flag, restart_flag
     pause_options = ["Continue", "Restart", "Exit to menu"]
     selected_item = 0
     while True:
@@ -256,7 +293,6 @@ def pause_menu():
 
 # Hàm pause game
 def pause_game():
-    global game_mode
     paused = True
     while paused:
         for event in pygame.event.get():
@@ -296,42 +332,11 @@ def start_new_game():
 
 pygame.init()
 
-
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("My Pong Game!")
-
 clock = pygame.time.Clock()
-
-# Kích thước các vật thể
-ball = pygame.Rect(0,0,30,30)
-ball.center = (screen_width/2, screen_height/2)
-
-cpu = pygame.Rect(0,0,20,100)
-cpu.midleft = (0, screen_height/2)
-
-player1 = pygame.Rect(0,0,20,100)
-player1.midright = (screen_width, screen_height/2)
-
-player2 = pygame.Rect(0,0,20,100)
-player2.midleft = (0, screen_height/2)
-
-# Tốc độ di chuyển các vật thể
-ball_speed_x = 7
-ball_speed_y = 7
-player1_speed_x = 0
-player1_speed_y = 0
-player2_speed_x = 0
-player2_speed_y = 0
-cpu_speed_x = 6
-cpu_speed_y = 6
-
-
-cpu_points, player1_points, player2_points = 0, 0, 0
-
 score_font = pygame.font.Font(None, 100)
 
 game_mode = show_menu()  # Show the menu and get the selected game mode
-# Các phím duy chuyển của Player 1 và Player 2
+# Vòng lặp chính của trò chơi
 running = True
 while running:
     for event in pygame.event.get():
