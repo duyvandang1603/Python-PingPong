@@ -1,9 +1,11 @@
 import pygame, sys, random
 # -*- coding: utf-8 -*-
 
-
+pygame.init()
 screen_width = 1300
 screen_height = 800
+screen = pygame.display.set_mode((screen_width, screen_height))
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 48, 48)
@@ -34,11 +36,11 @@ cpu_speed_x = 6
 cpu_speed_y = 6
 cpu_points, player1_points, player2_points = 0, 0, 0
 
-screen_menu = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("My Pong Game!")
+
+hit_sound = pygame.mixer.Sound("hit-sound.mp3")
 
 # Hàm reset ball
 def reset_ball():
@@ -81,6 +83,7 @@ def animate_ball():
     # Chỉ xử lý va chạm nếu collision_occurred là False
         if not collision_occurred:
             ball_speed_x *= -1
+            hit_sound.play()
 
         # Đặt collision_occurred thành True để chỉ xử lý một lần va chạm
             collision_occurred = True
@@ -93,6 +96,9 @@ def animate_player():
     player1.y += player1_speed_y
     player1.x += player1_speed_x
 
+    player2.y += player2_speed_y
+    player2.x += player2_speed_x
+    
     if player1.top <= 0:
         player1.top = 0
 
@@ -102,11 +108,9 @@ def animate_player():
     if player1.left <= screen_width/2:
         player1.left = screen_width/2
     
-    if player1.right >= screen_width:
-        player1.right = screen_width   
+    if player1.right >= screen_width - 50:
+        player1.right = screen_width - 50   
         
-    player2.y += player2_speed_y
-    player2.x += player2_speed_x
 
     if player2.top <= 0:
         player2.top = 0
@@ -116,8 +120,8 @@ def animate_player():
         
     if player2.left <= 0:
         player2.left = 0
-    if player2.right >= screen_width/2:
-        player2.right = screen_width/2
+    if player2.right >= screen_width/2 - 50:
+        player2.right = screen_width/2 - 50
            
 # Hàm di chuyển của CPU
 def animate_cpu():
@@ -130,9 +134,9 @@ def animate_cpu():
     if ball.centery >= cpu.centery:
         cpu_speed_y = 6
     if ball.centerx < cpu.centerx:
-        cpu_speed_x = -6  # Di chuyển sang trái nếu ball ở bên trái cpu
+        cpu_speed_x = -6  
     elif ball.centerx > cpu.centerx:
-        cpu_speed_x = 6  # Di chuyển sang phải nếu ball ở bên phải cpu
+        cpu_speed_x = 6  
 
         # Kiểm tra va chạm giữa CPU và bóng, nếu có thì di chuyển CPU ra khỏi bóng
     if cpu.colliderect(ball):
@@ -147,8 +151,8 @@ def animate_cpu():
         cpu.bottom = screen_height
     if cpu.left <= 0:
         cpu.left = 0
-    if cpu.right >= screen_width/2:
-        cpu.right = screen_width/2 
+    if cpu.right >= screen_width/2 - 50:
+        cpu.right = screen_width/2 - 50 
         
 # Hàm menu
 def show_menu():
@@ -221,15 +225,15 @@ def show_point():
           
 # Hàm gameover
 def game_over():
-    global game_over_flag
+    global game_over_flag, game_mode
     if player1_points == 10:
         winner_text = score_font.render("Player 1 wins!", True, "white")
         screen.blit(winner_text, (screen_width / 2 - 200, screen_height / 2))
         pygame.display.update()
         pygame.time.wait(2000)  # Chờ 2 giây trước khi thoát
-        show_menu()
-        start_new_game()
+        game_mode=show_menu()
         game_over_flag=True
+        start_new_game()
         
     elif game_mode == 'player':
         if player2_points == 10:
@@ -237,9 +241,9 @@ def game_over():
             screen.blit(winner_text, (screen_width / 2 - 200, screen_height / 2))
             pygame.display.update()
             pygame.time.wait(2000)  # Chờ 2 giây trước khi thoát
-            show_menu()
-            start_new_game()
+            game_mode=show_menu()
             game_over_flag=True
+            start_new_game()
 
     elif game_mode == 'cpu': 
         if cpu_points == 10:
@@ -247,15 +251,21 @@ def game_over():
             screen.blit(winner_text, (screen_width / 2 - 100, screen_height / 2))
             pygame.display.update()
             pygame.time.wait(2000)  # Chờ 2 giây trước khi thoát
-            show_menu()
-            start_new_game()
+            game_mode=show_menu()
             game_over_flag=True
+            start_new_game()
                
 # Hàm menu pause 
 def pause_menu():
+    ping_pong_pause_font = pygame.font.Font(None, 80)
+    ping_pong_pause_text = ping_pong_pause_font.render("Game Paused", True, (255, 255, 255))
+    ping_pong_pause_text_rect = ping_pong_pause_text.get_rect(center=(screen_width / 2, 100))    
     pause_options = ["Continue", "Restart", "Exit to menu"]
     selected_item = 0
     while True:
+        screen.fill(BLACK)
+        screen.blit(ping_pong_pause_text, ping_pong_pause_text_rect)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -274,9 +284,6 @@ def pause_menu():
                     elif selected_item == 2:
                         start_new_game()
                         return "new_game"
-        
-        screen.fill(BLACK)
-        
         # Vẽ các nút trên thanh menu
         font = pygame.font.SysFont(None, 50)
         
@@ -297,7 +304,7 @@ def pause_game():
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
+                if event.key == pygame.K_p or event.key == pygame.K_ESCAPE:
                     paused = False
                     return "continue"
             elif event.type == pygame.QUIT:  # Xử lý sự kiện tắt của hệ thống
@@ -308,7 +315,7 @@ def pause_game():
         if action == "continue":
             paused = False
         elif action == "restart":
-            start_new_game()
+            restart_flag = True
             return "restart"
         elif action == "new_game":
             start_new_game()
@@ -316,9 +323,7 @@ def pause_game():
 
 # Hàm bắt đầu game mới
 def start_new_game():
-    global game_over_flag, player1_points, player2_points, cpu_points, game_mode
-    game_mode = show_menu()
-
+    global game_over_flag, player1_points, player2_points, cpu_points
     game_over_flag = False
     player1_points = 0
     player2_points = 0
@@ -329,9 +334,7 @@ def start_new_game():
 
     player1.midright = (screen_width, screen_height/2)
     player2.midleft = (0, screen_height/2)
-
-pygame.init()
-
+    
 clock = pygame.time.Clock()
 score_font = pygame.font.Font(None, 100)
 
@@ -344,12 +347,15 @@ while running:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:
+            if event.key == pygame.K_p or event.key == pygame.K_ESCAPE:
                 action = pause_game()
                 if action == "restart":
                     start_new_game()
+                    restart_flag = False
                 if action == "new_game":
-                    show_menu()
+                    game_mode=show_menu()
+                    start_new_game()
+                    
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 player1_speed_y = -6
@@ -360,7 +366,6 @@ while running:
             if event.key == pygame.K_RIGHT:
                 player1_speed_x = 6 
 
-            
             if event.key == pygame.K_w:
                 player2_speed_y = -6
             if event.key == pygame.K_s:
@@ -369,7 +374,6 @@ while running:
                 player2_speed_x = -6    
             if event.key == pygame.K_d:
                 player2_speed_x = 6                 
-
                 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_UP:
@@ -381,7 +385,6 @@ while running:
             if event.key == pygame.K_RIGHT:
                 player1_speed_x = 0 
                 
-                
             if event.key == pygame.K_w:
                 player2_speed_y = 0
             if event.key == pygame.K_s:
@@ -390,9 +393,7 @@ while running:
                 player2_speed_x = 0    
             if event.key == pygame.K_d:
                 player2_speed_x = 0                 
-
-
-                
+      
     screen.fill('#006600')        
 
     animate_ball()
@@ -410,12 +411,9 @@ while running:
 
 # Thay thế pygame.draw.rect() bằng screen.blit() để vẽ hình ảnh lên màn hình
     screen.blit(paddle_image_right, player1) 
-
-
     pygame.draw.aaline(screen,'white',(screen_width/2, 0), (screen_width/2, screen_height))
     pygame.draw.ellipse(screen,'white',ball)
-    #pygame.draw.rect(screen,'white',player1)
-    #screen.blit(player1, (player1, player1))
+
 
     if game_mode == 'cpu':
         screen.blit(paddle_image_left, cpu) 
